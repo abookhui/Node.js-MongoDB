@@ -1,10 +1,15 @@
 const express = require('express')
 const app = express() // express library 사용
+const {MongoClient,ObjectId}  = require('mongodb');
 
 app.use(express.static(__dirname + '/public')); // 폴더 등록해주기
 app.set('view engine', 'ejs');
 
-const {MongoClient}  = require('mongodb');
+app.use(express.json()); // require.body 사용시 필요
+app.use(express.urlencoded({extended:true})); 
+
+
+
 
 // server가 DB와 통신하는 법
 let db;
@@ -20,8 +25,6 @@ new MongoClient(url).connect().then((client)=>{
 }).catch((err)=>{
   console.log(err)
 });
-
-
 
 
 app.get('/', (요청, 응답) => {  // main page 에 접속시 
@@ -48,4 +51,69 @@ app.get('/time',function(require,respond){
   let time = new Date();
   respond.render('present_time.ejs',{data : time});
 });
+
+
+/*1. 글 작성페이지에서 글써서 서버로 전송*/
+app.get('/write',function(require,respond){
+  respond.render('write.ejs');
+});
+
+/* 2 서버에서 글을 출력해보고 검사 */
+app.post('/add',async function(require,respond){
+  let save = require.body
+  console.log(save);
+  /* 3.글을 db에 저장 + 예외처리*/
+
+  
+  try{
+    if(save.title == '' || save.content==''){
+      respond.send('입력이 안됨');
+    }else{
+      await db.collection('post').insertOne({title :save.title, content:save.content});
+      respond.redirect('/list');
+    }
+  }catch(e){
+    console.log(e); // 에러 메세지 출력
+    respond.status(500).send('server error');
+  }
+})
+
+
+/*상세 페이지 API */
+
+app.get('/detail/:id', async function(require,respond){
+  try{
+  //console.log(require.params.aaaa)
+    let result = await db.collection('post').findOne({ _id : new ObjectId(require.params.id)})
+    //console.log(result);
+    if(result == null){
+      respond.status(404).send('이상한 url');
+    }
+    else respond.render('detail.ejs',{post : result});
+  }catch(e){
+    console.log(e);
+    respond.status(404).send('server error');
+  }
+  
+
+});
+app.get('/edit/:id', async function(require,respond){
+
+  //db.collection('post').updateOne({id:1},{$set : {revised document}})
+  //console.log(require.body);
+  let val = require.params.id;
+  let result = await db.collection('post').findOne({ _id : new ObjectId(require.params.id)});
+  console.log(val);
+  respond.render('edit.ejs',{result : result});
+  
+  app.post('/revise',async function(require2,respond2){
+  
+    console.log(require2.boby);
+    console.log(val);
+    
+    
+  })
+  
+});
+
 
