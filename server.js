@@ -1,7 +1,9 @@
 const express = require('express')
 const app = express() // express library 사용
 const {MongoClient,ObjectId}  = require('mongodb');
+const methodOverride = require('method-override');
 
+app.use(methodOverride('_method')) 
 app.use(express.static(__dirname + '/public')); // 폴더 등록해주기
 app.set('view engine', 'ejs');
 
@@ -97,23 +99,43 @@ app.get('/detail/:id', async function(require,respond){
   
 
 });
+
 app.get('/edit/:id', async function(require,respond){
 
   //db.collection('post').updateOne({id:1},{$set : {revised document}})
   //console.log(require.body);
-  let val = require.params.id;
-  let result = await db.collection('post').findOne({ _id : new ObjectId(require.params.id)});
-  console.log(val);
+  let edit_id = require.params.id;
+  let result = await db.collection('post').findOne({ _id : new ObjectId(edit_id)});
+  
   respond.render('edit.ejs',{result : result});
   
-  app.post('/revise',async function(require2,respond2){
-  
-    console.log(require2.boby);
-    console.log(val);
-    
-    
-  })
+});
+//revise 
+
+app.put('/revise', async function(require,respond){
+
+
+  // await db.collection('post').updateOne({_id : 1},
+  //       {$inc : {like:1}});
+
+
+  try{
+      let result = await db.collection('post').updateOne({_id : new ObjectId(require.body.id)},
+        {$set : {title : require.body.title, content : require.body.content}});
+      //console.log(result);
+      respond.redirect('/list');
+  }catch(e){
+    console.log(e);
+  }
   
 });
 
+app.post('/abc', async function(require,respond){
+  //console.log(1);
+  let result = require.body;
+  console.log(result.id);
 
+  await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
+
+})
+    

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
     <link rel="stylesheet" href="/main.css">
 </head>
 <body class="grey-bg">
@@ -13,11 +14,12 @@
     
     <div class="white-bg">
      <%  for(let i =0;i < posts.length; i++ ) { %>
-      <div class="list-box">
+      <div class="list-box" data-len="<%=posts.length %>">
          <h4><a href="/detail/<%=posts[i]._id %>">
             <%=posts[i].title %>  
           </a>
         <a href="/edit/<%=posts[i]._id %>">✏️</a>
+        <span class="delete" data-id="<%=posts[i]._id %>">🗑️</span>
         </h4>
 
         <p><%=posts[i].content %></p>
@@ -25,5 +27,27 @@
       <% } %>
     </div> 
   
+
+    <script>
+    var len = document.querySelectorAll('.list-box')[0].dataset.len;
+   
+      // script에서 db _id값 전체 받기
+      //console.log(JSON.stringify(ans.dataset.id));
+      //console.log(len);
+      for(let i =0;i<len;i++){
+          document.querySelectorAll('.delete')[i]
+          .addEventListener('click',function(e){
+            var getid = e.target.dataset.id;
+          fetch('/abc', {
+            method : 'POST',
+            headers : { 'Content-Type' : 'application/json' },
+            body : JSON.stringify({id : getid})
+          })
+        })
+      }
+        
+      
+      
+    </script>
   </body>
 </html>
