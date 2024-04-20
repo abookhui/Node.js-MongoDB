@@ -2,6 +2,8 @@ const express = require('express')
 const app = express() // express library 사용
 const {MongoClient,ObjectId}  = require('mongodb');
 const methodOverride = require('method-override');
+const e = require('express');
+const { escapeXML } = require('ejs');
 
 app.use(methodOverride('_method')) 
 app.use(express.static(__dirname + '/public')); // 폴더 등록해주기
@@ -42,13 +44,8 @@ app.get('/about',function(require,respond){
   respond.sendFile(__dirname + '/about.html');
 });
 
-app.get('/list',async function(require,respond){
-  let result = await db.collection('post').find().toArray(); // mongodb document 가져옴
 
-  //console.log(result[0].title);
-  //respond.send(result[0].title); respond 는 한번만
-  respond.render('list.ejs',{ posts : result });
-});
+
 app.get('/time',function(require,respond){
   let time = new Date();
   respond.render('present_time.ejs',{data : time});
@@ -111,7 +108,13 @@ app.get('/edit/:id', async function(require,respond){
   
 });
 //revise 
+app.get('/list',async function(require,respond){
+  let result = await db.collection('post').find().toArray(); // mongodb document 가져옴
 
+  //console.log(result[0].title);
+  //respond.send(result[0].title); respond 는 한번만
+  respond.render('list.ejs',{ posts : result });
+});
 app.put('/revise', async function(require,respond){
 
 
@@ -139,3 +142,68 @@ app.post('/abc', async function(require,respond){
 
 })
     
+// app.get('/list/1',async function(require,respond){
+//   //1~5번 글
+//   let result = await db.collection('post').find().limit(5).toArray(); 
+
+//   respond.render('list.ejs',{ posts : result });
+// });
+// app.get('/list/2',async function(require,respond){
+//   //1~5번 글
+//   let result = await db.collection('post').find().skip(5).limit(5).toArray(); 
+
+//   respond.render('list.ejs',{ posts : result });
+// });
+// app.get('/list/3',async function(require,respond){
+//   //1~5번 글
+//   let result = await db.collection('post').find().skip(10).limit(5).toArray(); 
+
+//   respond.render('list.ejs',{ posts : result });
+// });
+
+// app.get('/list/:id',async function(require,respond){
+//   //skip() 성능 안좋음 너무 많이 skip안하게
+  
+//   let result = await db.collection('post').find()
+//   .skip((require.params.id-1)*5).limit(5).toArray(); 
+
+//   respond.render('list.ejs',{ posts : result });
+// });
+
+app.get('/list/next/:id',async function(require,respond){
+  //skip() 성능 안좋음 너무 많이 skip안하게
+  // 방근 본 마지막번째 게시물보다  큰 거
+  // 이건 다음 페이지만 움직일 수 있다.
+ 
+    let result = await db.collection('post')
+  .find({_id : {$gt : new ObjectId(require.params.id)}}).limit(5).toArray(); 
+ 
+  
+  if(result == ""){
+    result = await db.collection('post')
+    .find({_id : {$lte : new ObjectId(require.params.id)}}).limit(5).toArray(); 
+    respond.render('list.ejs',{ posts : result });
+  }
+  else{
+    respond.render('list.ejs',{ posts : result });
+  }
+  
+  
+});
+
+app.get('/list/previous/:id', async function(require,respond){
+ 
+    let result = await db.collection('post')
+  .find({_id : {$lt : new ObjectId(require.params.id)}}).limit(5).toArray();
+
+  if(result == ""){
+    result = await db.collection('post')
+  .find().limit(5).toArray();
+  respond.render('list.ejs',{ posts : result });
+  }
+    
+  else{
+    respond.render('list.ejs',{ posts : result });
+  }
+  
+})  
