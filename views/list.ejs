@@ -1,55 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
-    <link rel="stylesheet" href="/main.css">
-</head>
-<body class="grey-bg">
-    <!-- <%= JSON.stringify(posts) %> -->
-
-    <%- include('nav.ejs') %>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>List</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     
-    <div class="white-bg">
-     <%  for(let i =0;i < posts.length; i++ ) { %>
-      <div class="list-box" data-len="<%=posts.length %>">
-         <h4><a href="/detail/<%=posts[i]._id %>">
-            <%=posts[i].title %>  
-          </a>
-        <a href="/edit/<%=posts[i]._id %>">✏️</a>
-        <span class="delete" data-id="<%=posts[i]._id %>">🗑️</span>
-        </h4>
-
-        <p><%=posts[i].content %></p>
-      </div>
-      
-      <% } %>
-    </div> 
-    <a href="/list/previous/<%=posts[0]._id %>">이전</a>
-  <a href="/list/next/<%=posts[posts.length - 1]._id %>">다음</a>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+     <link rel="stylesheet" href="/main.css">
+    <style>
+          
     
-    <script>
-    var len = document.querySelectorAll('.list-box')[0].dataset.len;
+    </style>
+  </head>
+  <body style="background-color: beige;">
    
-      // script에서 db _id값 전체 받기
-      //console.log(JSON.stringify(ans.dataset.id));
-      //console.log(len);
-      for(let i =0;i<len;i++){
-          document.querySelectorAll('.delete')[i]
-          .addEventListener('click',function(e){
-            var getid = e.target.dataset.id;
-          fetch('/abc', {
-            method : 'POST',
-            headers : { 'Content-Type' : 'application/json' },
-            body : JSON.stringify({id : getid})
-          })
-        })
-      }
+      <%- include('nav.ejs')%>
+    
+        <div class="container button-box">
+          <a href="/list/previous/<%=post[post.length-1]._id%>"><button>⬅️이전</button></a>
+          <a href="/list/next/<%=post[post.length-1]._id%>"><button>다음➡️</button></a>
+          
+        </div>
+    
+  
+        <% for(let i =0; i < post.length; i++){ %>
+
         
-      
-      
-    </script>
+        <div class="container white-bg">
+          
+
+          <div class="list-box">
+            <h4><a class = "title-click" href="/detail/<%=post[i]._id%>">
+              <%=post[i].title%>
+            </a>
+            <a href="/edit/<%=post[i]._id%>">✏️</a>
+          </h4>
+          <span class ="delete-content" data-id = "<%=post[i]._id%>">🗑️</span>
+          
+          
+
+            <div class="list-content">
+              <p><%=post[i].content%></p>
+            </div>
+          </div>
+          
+        </div>
+      <%}%> 
+
+        <script>    
+
+          let len = "<%=post.length%>";
+          console.log(len);
+          for(let i =0; i< len ;i++){
+            $('.delete-content').eq(i).click(function(e){
+              var getid = e.target.dataset.id;
+              fetch ('/delete',{
+                method : 'POST',
+                headers : {'Content-Type' : 'application/json'},
+                body : JSON.stringify({id : getid})
+                
+              })
+            })
+          }
+          
+
+
+          $('.nav-link').removeClass('nav-present');
+          $('.nav-link').eq(1).addClass('nav-present');
+         
+          // 제목에 마우스 올릴 시 밑줄
+          $('.title-click').on('mouseenter',function(e){
+            $(e.target).css('text-decoration','underline');
+            $('.title-click').on('mouseleave',function(e){
+              $(e.target).css('text-decoration','none');
+            })
+          })
+
+
+
+
+        </script>
+    
+        
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>
