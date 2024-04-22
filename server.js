@@ -6,7 +6,7 @@ const { escapeXML } = require('ejs');
 const methodOverride = require('method-override'); // install override-method PUT , DELETE 사용 
 const bcrypt = require('bcrypt'); // bcrypt , hashing algorithm  
 const MongoStore = require('connect-mongo');  // session에 저장
-require('dotenv').config()
+require('dotenv').config() 
 
 app.set('view engine', 'ejs');  // install ejs
 app.use(methodOverride('_method')); // install override-method
@@ -22,8 +22,9 @@ const passport = require('passport')
 const LocalStrategy = require('passport-local')
 
 app.use(passport.initialize())
+
 app.use(session({
-  secret: '암호화에 쓸 비번',  //암호화에 쓸 비번
+  secret: process.env.SECRET,  // 암호화에 쓸 비번
   resave : false,          // 유저가 서버로 요청할 때마다 세션 갱신할건지
   saveUninitialized : false, // 로그인을 안해도 세션 만들건지
   cookie : {maxAge : 60 * 60 * 1000}, // session 유효기간 1시간으로 설정함
