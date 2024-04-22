@@ -4,6 +4,9 @@ const { MongoClient ,ObjectId} = require('mongodb'); // install mongodb@5 Object
 const e = require('express');
 const { escapeXML } = require('ejs');
 const methodOverride = require('method-override'); // install override-method PUT , DELETE 사용 
+const bcrypt = require('bcrypt'); // bcrypt , hashing algorithm  
+const MongoStore = require('connect-mongo');  // session에 저장
+
 
 app.set('view engine', 'ejs');  // install ejs
 app.use(methodOverride('_method')); // install override-method
@@ -23,7 +26,11 @@ app.use(session({
   secret: '암호화에 쓸 비번',  //암호화에 쓸 비번
   resave : false,          // 유저가 서버로 요청할 때마다 세션 갱신할건지
   saveUninitialized : false, // 로그인을 안해도 세션 만들건지
-  cookie : {maxAge : 60 * 60 * 1000} // session 유효기간 1시간으로 설정함
+  cookie : {maxAge : 60 * 60 * 1000}, // session 유효기간 1시간으로 설정함
+  store : MongoStore.create({
+    mongoUrl : 'mongodb+srv://admin:abokhui3249@cluster0.0rczsjn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
+    dbName : 'forum'
+  })
 }))
 
 app.use(passport.session()) 
@@ -171,7 +178,9 @@ passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) =
             if (!result) { // 결과 없음
                 return cb(null, false, { message: '아이디 DB에 없음' }) // 회원 인증 실패 false
             }
-            if (result.password == 입력한비번) { // 아이디 있고 비번 확인
+
+            
+            if (await bcrypt.compare(입력한비번,result.password)) { // 아이디 있고 비번 확인  // hash 된거 확인
                 return cb(null, result)
             } else {
                 return cb(null, false, { message: '비번불일치' });
@@ -198,7 +207,9 @@ passport.deserializeUser(async (user,done)=>{  // 쿠키 분석해줌
 })
 
 app.get('/login',async (req,res) =>{
-    console.log(req.user);
+   
+    let ans=req.user;
+    console.log(ans);
     res.render('login.ejs',);
 })
 
@@ -217,4 +228,56 @@ app.post('/login',async (req,res, next) =>{
 
     })(req,res,next);
 
+})
+
+app.get('/mypage',(req,res)=>{
+    let time = new Date();
+    
+    //let result = await db.collection('user').findOne({_id : new ObjectId()})
+    // if(){
+    //     res.render('mypage.ejs',{date:time});
+    // }
+    // else{
+    //     // 로그인
+    // }
+    
+})
+
+app.get('/register',(req,res)=>{
+    res.render('register.ejs')
+})
+
+app.post('/register',async (req,res)=>{
+    let result = req.body;
+    let hash = await bcrypt.hash(result.password,10); // num : 얼마나 꼬아주느지
+    //console.log(hash);
+    //console.log(result);
+    
+    try{
+        
+        let cmp = await db.collection('user').findOne({username : result.username}); // 없으면 null
+    
+        if(cmp != null){
+            res.send('아이디 중복 다시 입력.');
+        }
+        else if(result.username == ''||result.password == ''){
+            res.send('입력을 안함');
+        }
+        else if(result.check !== result.password){
+            res.send('비밀번호가 다름');
+        }
+        else if(result.password.length <= 6){
+            res.send('비밀번호가 6이하입니다.');
+        }
+        else {
+            await db.collection('user').insertOne({
+                username : result.username,
+                password : hash
+            });
+            res.redirect('/');
+        }
+    }catch(e){
+        console.log(e);
+    }
+    
 })
