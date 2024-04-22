@@ -12,7 +12,12 @@ app.set('view engine', 'ejs');  // install ejs
 app.use(methodOverride('_method')); // install override-method
 app.use(express.static(__dirname + '/public')); // 폴더 등록해주기
 
-app.use(express.json()); // require.body 사용시 필요
+
+const bodyParser = require('body-parser')
+//app.use(express.json()); // require.body 사용시 필요
+app.use(bodyParser.json());
+ 
+
 app.use(express.urlencoded({extended:true})); 
 
 
@@ -28,6 +33,7 @@ app.use(session({
   resave : false,          // 유저가 서버로 요청할 때마다 세션 갱신할건지
   saveUninitialized : false, // 로그인을 안해도 세션 만들건지
   cookie : {maxAge : 60 * 60 * 1000}, // session 유효기간 1시간으로 설정함
+  
   store : MongoStore.create({
     mongoUrl : process.env.DB_URL,
     dbName : 'forum'
@@ -36,7 +42,7 @@ app.use(session({
 
 app.use(passport.session()) 
 
-
+app.use('/mypage',CheckLogin) // 이 밑 코드는 모두다 미들웨어 전부 적용 / 제한사항
 
 const url = process.env.DB_URL;
 new MongoClient(url).connect().then((client)=>{
@@ -50,6 +56,16 @@ new MongoClient(url).connect().then((client)=>{
   console.log(err)
 })
 
+function CheckLogin(req,res,next){
+
+    if(!req.user){
+        res.send('로그인 하세요.');  // 응답해 버리면 이 밑 코드 실행 안됨
+    }
+    else next() // middleware 코드 실행 끝났으니 다음 코드 실행하시오 
+}
+
+
+
 app.get('/',(req,res)=>{
     res.sendFile(__dirname + '/index.html');
 })
@@ -58,7 +74,6 @@ app.get('/',(req,res)=>{
 
 /*상세 페이지 API */
 app.get('/detail/:id',async (req,res)=>{
-
     try{
     let result = await db.collection('post').findOne({_id : new ObjectId(req.params)});
         //console.log(result);
@@ -105,26 +120,32 @@ app.get('/edit/:id', async (req,res)=>{
 
 app.put('/revise',async (req,res) => {
     let result = req.body;
-    //console.log(result);
+    console.log(result);
     try{
         if(result.title == '' || result.content == ''){
                 res.send("<script>alert('제목 또는 내용이 빈칸입니다.');</script>");
-                res.redirect('/list');
+                //res.redirect('/list');
             }
-            else{
-                await db.collection('post').updateOne({_id : new ObjectId(result.id)},
-                {$set:{
-                    title : result.title,
-                    content : result.content
-                }});
-                res.redirect('/list');
-            }
+        else{
+            await db.collection('post').updateOne({_id : new ObjectId(result.id)},
+            {$set:{
+                title : result.title,
+                content : result.content
+            }});
+            res.redirect('/list');
+        }
     }catch(e){
         console.log(e);
     }
     
 });
-app.get('/list', async (req,res)=>{
+
+function timeOut(req,res,next){
+    let result = new Date();
+    console.log(result);
+    next();
+}
+app.get('/list',timeOut ,async (req,res)=>{
     let result = await db.collection('post').find().toArray();
     //console.log(result);
     res.render('list.ejs' , {post : result});
@@ -205,17 +226,14 @@ passport.deserializeUser(async (user,done)=>{  // 쿠키 분석해줌
 })
 
 
-app.get('/write',async (req,res)=>{
+app.get('/write',CheckLogin,async (req,res)=>{
     try{
         let ans =req.user;
 
-        if(ans == null){ // 로그인 안됨
-            res.send('로그인 후 이용 가능');
-            //res.redirect('/login');
-        }
-        else{
+        if(ans != null){ 
             res.render('write.ejs');
         }
+ 
     }catch(e){
         console.log(e);
     }
@@ -224,6 +242,16 @@ app.get('/write',async (req,res)=>{
  
 })
 
+
+function LoginCondition(req,res,next){
+    let result = req.body;
+    
+    if(result.username==''||result.password == ''){
+        res.send('입력을 안함');
+    }
+    
+    else next();
+}
 
 app.get('/login',async (req,res) =>{
    try{
@@ -241,7 +269,7 @@ app.get('/login',async (req,res) =>{
         
 })
 
-app.post('/login',async (req,res, next) =>{
+app.post('/login',LoginCondition,async (req,res, next) =>{
     
     passport.authenticate('local',function(error, user, info){ //오류 성공 실패
         //console.log(error);
@@ -258,32 +286,25 @@ app.post('/login',async (req,res, next) =>{
 
 })
 
-app.get('/mypage',async (req,res)=>{
+app.get('/mypage',CheckLogin,async (req,res)=>{
     try{
         let ans =req.user;
         //console.log(result==null);
 
-        if(ans == null){ // 로그인 안됨
-            res.send('로그인 후 이용 가능');
-            //res.redirect('/login');
-        }
-        else{
+        if(ans!=null){ // 로그인 안됨
             res.render('mypage.ejs',{result: ans.result});
         }
+
     }catch(e){
         console.log(e);
     }
-
- 
-
-    
 })
 
 app.get('/register',(req,res)=>{
     res.render('register.ejs')
 })
 
-app.post('/register',async (req,res)=>{
+app.post('/register',LoginCondition,async (req,res)=>{
     let result = req.body;
     let hash = await bcrypt.hash(result.password,10); // num : 얼마나 꼬아주느지
     //console.log(hash);
@@ -296,9 +317,7 @@ app.post('/register',async (req,res)=>{
         if(cmp != null){
             res.send('아이디 중복 다시 입력.');
         }
-        else if(result.username == ''||result.password == ''){
-            res.send('입력을 안함');
-        }
+
         else if(result.check !== result.password){
             res.send('비밀번호가 다름');
         }
