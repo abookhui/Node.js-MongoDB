@@ -8,10 +8,14 @@
 <body>
     <%- include('nav.ejs')%>
     <div class="container">
-        <h2><%=date%>></h2>
+       <h1><%= result.username%>의 Mypage</h1>
     </div>
     
 
+    <script>
 
+        $('.nav-login').addClass('hide');
+        $('.nav-register').addClass('hide');
+    </script>
 </body>
 </html>

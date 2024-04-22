@@ -68,9 +68,6 @@ app.get('/detail/:id',async (req,res)=>{
     }
     
 })
-app.get('/write',(req,res)=>{
-    res.render('write.ejs');
-})
 
 app.post('/add',async (req,res)=>{
     let result = req.body;
@@ -206,11 +203,41 @@ passport.deserializeUser(async (user,done)=>{  // 쿠키 분석해줌
     })
 })
 
+
+app.get('/write',async (req,res)=>{
+    try{
+        let ans =req.user;
+
+        if(ans == null){ // 로그인 안됨
+            res.send('로그인 후 이용 가능');
+            //res.redirect('/login');
+        }
+        else{
+            res.render('write.ejs');
+        }
+    }catch(e){
+        console.log(e);
+    }
+    
+    
+ 
+})
+
+
 app.get('/login',async (req,res) =>{
-   
-    let ans=req.user;
-    console.log(ans);
-    res.render('login.ejs',);
+   try{
+        let ans=req.user;
+        if(ans==null){
+            res.render('login.ejs',);
+        }
+        else{
+            res.send('이미 로그인 되어있습니다.');
+        }
+   }catch(e){
+    console.log(e);
+   }
+    
+        
 })
 
 app.post('/login',async (req,res, next) =>{
@@ -230,16 +257,24 @@ app.post('/login',async (req,res, next) =>{
 
 })
 
-app.get('/mypage',(req,res)=>{
-    let time = new Date();
-    
-    //let result = await db.collection('user').findOne({_id : new ObjectId()})
-    // if(){
-    //     res.render('mypage.ejs',{date:time});
-    // }
-    // else{
-    //     // 로그인
-    // }
+app.get('/mypage',async (req,res)=>{
+    try{
+        let ans =req.user;
+        //console.log(result==null);
+
+        if(ans == null){ // 로그인 안됨
+            res.send('로그인 후 이용 가능');
+            //res.redirect('/login');
+        }
+        else{
+            res.render('mypage.ejs',{result: ans.result});
+        }
+    }catch(e){
+        console.log(e);
+    }
+
+ 
+
     
 })
 
