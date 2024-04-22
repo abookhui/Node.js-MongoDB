@@ -6,7 +6,7 @@ const { escapeXML } = require('ejs');
 const methodOverride = require('method-override'); // install override-method PUT , DELETE 사용 
 const bcrypt = require('bcrypt'); // bcrypt , hashing algorithm  
 const MongoStore = require('connect-mongo');  // session에 저장
-
+require('dotenv').config()
 
 app.set('view engine', 'ejs');  // install ejs
 app.use(methodOverride('_method')); // install override-method
@@ -28,7 +28,7 @@ app.use(session({
   saveUninitialized : false, // 로그인을 안해도 세션 만들건지
   cookie : {maxAge : 60 * 60 * 1000}, // session 유효기간 1시간으로 설정함
   store : MongoStore.create({
-    mongoUrl : 'mongodb+srv://admin:abokhui3249@cluster0.0rczsjn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
+    mongoUrl : process.env.DB_URL,
     dbName : 'forum'
   })
 }))
@@ -37,11 +37,11 @@ app.use(passport.session())
 
 
 
-const url = 'mongodb+srv://admin:abokhui3249@cluster0.0rczsjn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+const url = process.env.DB_URL;
 new MongoClient(url).connect().then((client)=>{
   console.log('DB연결성공')
   db = client.db('forum')
-    app.listen(8080,function(){
+    app.listen(process.env.PORT,function(){
         console.log('http://localhost:8080 에서 서버 실행중');
     });
 
