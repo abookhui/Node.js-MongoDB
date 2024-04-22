@@ -12,6 +12,24 @@ app.use(express.static(__dirname + '/public')); // 폴더 등록해주기
 app.use(express.json()); // require.body 사용시 필요
 app.use(express.urlencoded({extended:true})); 
 
+
+
+const session = require('express-session')
+const passport = require('passport')
+const LocalStrategy = require('passport-local')
+
+app.use(passport.initialize())
+app.use(session({
+  secret: '암호화에 쓸 비번',  //암호화에 쓸 비번
+  resave : false,          // 유저가 서버로 요청할 때마다 세션 갱신할건지
+  saveUninitialized : false, // 로그인을 안해도 세션 만들건지
+  cookie : {maxAge : 60 * 60 * 1000} // session 유효기간 1시간으로 설정함
+}))
+
+app.use(passport.session()) 
+
+
+
 const url = 'mongodb+srv://admin:abokhui3249@cluster0.0rczsjn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 new MongoClient(url).connect().then((client)=>{
   console.log('DB연결성공')
@@ -143,4 +161,60 @@ app.post('/delete',async (req,res) =>{
         console.log(e);
     }
    
+})
+
+passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
+    // 제출한 아이디/비번 db에 있는지 검사하는 코드
+
+    try{
+        let result = await db.collection('user').findOne({ username : 입력한아이디})
+            if (!result) { // 결과 없음
+                return cb(null, false, { message: '아이디 DB에 없음' }) // 회원 인증 실패 false
+            }
+            if (result.password == 입력한비번) { // 아이디 있고 비번 확인
+                return cb(null, result)
+            } else {
+                return cb(null, false, { message: '비번불일치' });
+            }
+    }catch(e){
+        console.log(e);
+    }
+
+
+}))
+  
+passport.serializeUser((user,done) =>{  // section 데이터 작성중
+    console.log(user)
+    process.nextTick(function(){  // 비동기적으로 실행시킬때
+        done(null,{ id : user._id ,username : user.username})
+    })
+})
+passport.deserializeUser(async (user,done)=>{  // 쿠키 분석해줌
+    let result = await db.collection('user').findOne({_id : new ObjectId(user.id)});
+    delete result.password;
+    process.nextTick(()=>{
+        done(null,{result}); //쿠키 까봐서 session 데이터와 비교
+    })
+})
+
+app.get('/login',async (req,res) =>{
+    console.log(req.user);
+    res.render('login.ejs',);
+})
+
+app.post('/login',async (req,res, next) =>{
+    
+    passport.authenticate('local',function(error, user, info){ //오류 성공 실패
+        //console.log(error);
+        //console.log(user);
+        //console.log(info);
+        if(error) return res.status(500).json(error);
+        if(!user) return  res.status(401).json(info.message);
+        req.logIn(user,function(err){
+            if(err) return next(err);
+            res.redirect('/');
+        })
+
+    })(req,res,next);
+
 })
