@@ -24,7 +24,8 @@ app.use(express.urlencoded({extended:true}));
 
 const session = require('express-session')
 const passport = require('passport')
-const LocalStrategy = require('passport-local')
+const LocalStrategy = require('passport-local');
+const { connect } = require('./routers/shop.js');
 
 app.use(passport.initialize())
 
@@ -44,8 +45,10 @@ app.use(passport.session())
 
 app.use('/mypage',CheckLogin) // 이 밑 코드는 모두다 미들웨어 전부 적용 / 제한사항
 
-const url = process.env.DB_URL;
-new MongoClient(url).connect().then((client)=>{
+let connectDB = require('./database.js');
+
+let db;
+connectDB.then((client)=>{
   console.log('DB연결성공')
   db = client.db('forum')
     app.listen(process.env.PORT,function(){
@@ -54,7 +57,7 @@ new MongoClient(url).connect().then((client)=>{
 
 }).catch((err)=>{
   console.log(err)
-})
+});
 
 function CheckLogin(req,res,next){
 
@@ -72,122 +75,114 @@ app.get('/',(req,res)=>{
 
 
 
+app.use('/',require('./routers/postAction.js'));
 /*상세 페이지 API */
-app.get('/detail/:id',async (req,res)=>{
-    try{
-    let result = await db.collection('post').findOne({_id : new ObjectId(req.params)});
-        //console.log(result);
-        res.render('detail.ejs',{post : result});
-    }catch(e){
-        console.log(e);
-        res.status(400).send('error')
-    }
+// app.get('/detail/:id',async (req,res)=>{
+//     try{
+//     let result = await db.collection('post').findOne({_id : new ObjectId(req.params)});
+//         //console.log(result);
+//         res.render('detail.ejs',{post : result});
+//     }catch(e){
+//         console.log(e);
+//         res.status(400).send('error')
+//     }
     
-})
+// })
 
-app.post('/add',async (req,res)=>{
-    let result = req.body;
+// app.post('/add',async (req,res)=>{
+//     let result = req.body;
 
-    //console.log(result);
-
-    try{
-        if(result.title == '' || result.content == ''){
-            res.send('입력이 안됨');
-        }
-        else {
-            await db.collection('post').insertOne({title : result.title, content : result.content})
-            res.redirect('/list');
-        }
+//     try{
+//         if(result.title == '' || result.content == ''){
+//             res.send('입력이 안됨');
+//         }
+//         else {
+//             await db.collection('post').insertOne({title : result.title, content : result.content})
+//             res.redirect('/list');
+//         }
         
-    }catch(e){
-        console.log(e);
-        res.status(500).send('server error');
-    }
+//     }catch(e){
+//         console.log(e);
+//         res.status(500).send('server error');
+//     }
+// })
+
+// app.get('/edit/:id', async (req,res)=>{
+//     try{
+//         let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
     
-})
-
-
-app.get('/edit/:id', async (req,res)=>{
-    try{
-        let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
+//     res.render('edit.ejs',{result : result});
+//     }catch(e){
+//         console.log(e);
+//     }
     
-    res.render('edit.ejs',{result : result});
-    }catch(e){
-        console.log(e);
-    }
+// })
+
+// app.put('/revise',async (req,res) => {
+//     let result = req.body;
+//     console.log(result);
+//     try{
+//         if(result.title == '' || result.content == ''){
+//                 res.send("<script>alert('제목 또는 내용이 빈칸입니다.');</script>");
+//                 //res.redirect('/list');
+//             }
+//         else{
+//             await db.collection('post').updateOne({_id : new ObjectId(result.id)},
+//             {$set:{
+//                 title : result.title,
+//                 content : result.content
+//             }});
+//             res.redirect('/list');
+//         }
+//     }catch(e){
+//         console.log(e);
+//     }
     
-})
+// });
 
-app.put('/revise',async (req,res) => {
-    let result = req.body;
-    console.log(result);
-    try{
-        if(result.title == '' || result.content == ''){
-                res.send("<script>alert('제목 또는 내용이 빈칸입니다.');</script>");
-                //res.redirect('/list');
-            }
-        else{
-            await db.collection('post').updateOne({_id : new ObjectId(result.id)},
-            {$set:{
-                title : result.title,
-                content : result.content
-            }});
-            res.redirect('/list');
-        }
-    }catch(e){
-        console.log(e);
-    }
+// app.get('/list' ,async (req,res)=>{
+//     let result = await db.collection('post').find().toArray();
+//     //console.log(result);
+//     res.render('list.ejs' , {post : result});
+// });
+
+// app.get('/list/next/:id', async (req,res)=>{
+//     try{
+//         let result = await db.collection('post')
+//             .find({_id : {$gte :new ObjectId(req.params.id)}})
+//             .limit(4).toArray();
+
+//         res.render('list.ejs',{post:result});
+//     }catch(e){
+//         console.log(e);
+//     }
     
-});
+// });
 
-function timeOut(req,res,next){
-    let result = new Date();
-    console.log(result);
-    next();
-}
-app.get('/list',timeOut ,async (req,res)=>{
-    let result = await db.collection('post').find().toArray();
-    //console.log(result);
-    res.render('list.ejs' , {post : result});
-});
+// app.get('/list/previous/:id', async (req,res)=>{
+//     try{
+//         let result = await db.collection('post')
+//             .find({_id : {$lte :new ObjectId(req.params.id)}})
+//             .limit(4).toArray();
 
-app.get('/list/next/:id', async (req,res)=>{
-    try{
-        let result = await db.collection('post')
-            .find({_id : {$gte :new ObjectId(req.params.id)}})
-            .limit(4).toArray();
-
-        res.render('list.ejs',{post:result});
-    }catch(e){
-        console.log(e);
-    }
+//         res.render('list.ejs',{post:result});
+//     }catch(e){
+//         console.log(e);
+//     }
     
-});
+// });
 
-app.get('/list/previous/:id', async (req,res)=>{
-    try{
-        let result = await db.collection('post')
-            .find({_id : {$lte :new ObjectId(req.params.id)}})
-            .limit(4).toArray();
-
-        res.render('list.ejs',{post:result});
-    }catch(e){
-        console.log(e);
-    }
-    
-});
-
-app.post('/delete',async (req,res) =>{
-    try{
-        let result = req.body;
-        //console.log(result);
-        await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
-        res.redirect('/list');
-    }catch(e){
-        console.log(e);
-    }
+// app.post('/delete',async (req,res) =>{
+//     try{
+//         let result = req.body;
+//         //console.log(result);
+//         await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
+//         res.redirect('/list');
+//     }catch(e){
+//         console.log(e);
+//     }
    
-})
+// })
 
 passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
     // 제출한 아이디/비번 db에 있는지 검사하는 코드
@@ -226,21 +221,21 @@ passport.deserializeUser(async (user,done)=>{  // 쿠키 분석해줌
 })
 
 
-app.get('/write',CheckLogin,async (req,res)=>{
-    try{
-        let ans =req.user;
+// app.get('/write',CheckLogin,async (req,res)=>{
+//     try{
+//         let ans =req.user;
 
-        if(ans != null){ 
-            res.render('write.ejs');
-        }
+//         if(ans != null){ 
+//             res.render('write.ejs');
+//         }
  
-    }catch(e){
-        console.log(e);
-    }
+//     }catch(e){
+//         console.log(e);
+//     }
     
     
  
-})
+// })
 
 
 function LoginCondition(req,res,next){
@@ -336,3 +331,5 @@ app.post('/register',LoginCondition,async (req,res)=>{
     }
     
 })
+
+app.use('/shop',require('./routers/shop.js'));
