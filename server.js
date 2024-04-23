@@ -333,3 +333,27 @@ app.post('/register',LoginCondition,async (req,res)=>{
 })
 
 app.use('/shop',require('./routers/shop.js'));
+
+// app.get('/list/search',async (req,res)=>{
+//     console.log(req.body);
+//     res.render('search.ejs');
+// })
+
+app.post('/list/search',async (req,res)=>{
+    
+    try{
+       let ans = req.body;
+        //console.log(req.body); 
+        let result = await db.collection('post')
+        .find({title : {$regex : ans.search_result}}).toArray();
+        
+        result[0].ans = ans.search_result;
+        //console.log(result);
+        res.render('search.ejs',{post:result});
+    }catch(e){
+        console.log(e);
+    }
+    
+   
+    
+})
