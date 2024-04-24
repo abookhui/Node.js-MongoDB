@@ -4,7 +4,6 @@ let connectDB = require('../database.js');
 
 let db;
 connectDB.then((client)=>{
-  console.log('DB연결성공')
   db = client.db('forum')
 }).catch((err)=>{
   console.log(err)
@@ -22,7 +21,8 @@ function CheckLogin(req,res,next){
 router.get('/detail/:id',async (req,res)=>{
     try{
     let result = await db.collection('post').findOne({_id : new ObjectId(req.params)});
-        //console.log(result);
+        console.log(result);
+        
         res.render('detail.ejs',{post : result});
     }catch(e){
         console.log(e);
@@ -31,41 +31,6 @@ router.get('/detail/:id',async (req,res)=>{
     
 });
 
-// write add
-
-router.get('/write',CheckLogin,async (req,res)=>{
-    try{
-        let ans =req.user;
-
-        if(ans != null){ 
-            res.render('write.ejs');
-        }
- 
-    }catch(e){
-        console.log(e);
-    }
-    
-    
- 
-})
-
-router.post('/add',async (req,res)=>{
-    let result = req.body;
-
-    try{
-        if(result.title == '' || result.content == ''){
-            res.send('입력이 안됨');
-        }
-        else {
-            await db.collection('post').insertOne({title : result.title, content : result.content})
-            res.redirect('/list');
-        }
-        
-    }catch(e){
-        console.log(e);
-        res.status(500).send('server error');
-    }
-})
 
 // edit revise
 
@@ -102,10 +67,13 @@ router.put('/revise',async (req,res) => {
     }
     
 });
+
 // list
 router.get('/list' ,async (req,res)=>{
     let result = await db.collection('post').find().toArray();
     //console.log(result);
+    
+    //console.log(req.user);
     res.render('list.ejs' , {post : result});
 });
 
@@ -135,17 +103,69 @@ router.get('/list/previous/:id', async (req,res)=>{
     
 });
 
+
+
+
 //delete
 router.post('/delete',async (req,res) =>{
     try{
         let result = req.body;
-        //console.log(result);
-        await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
+        let ans = req.user.result;
+        console.log('-----')
+        console.log(new ObjectId(result.userID));
+        console.log(new ObjectId(ans._id));
+        //console.log(new ObjectId(result.userID).equals(new ObjectId(ans._id)))
+       
+        if(new ObjectId(result.userID).equals(new ObjectId(ans._id))){
+            await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
+        }
+        
         res.redirect('/list');
     }catch(e){
         console.log(e);
     }
    
 })
+
+// write add
+
+router.get('/write',CheckLogin,async (req,res)=>{
+    try{
+        let ans =req.user;
+
+        if(ans != null){ 
+            res.render('write.ejs');
+        }
+ 
+    }catch(e){
+        console.log(e);
+    }
+})
+
+router.post('/add',async (req,res)=>{
+    let result = req.body;
+    let ans = req.user.result;
+    console.log(result);
+    console.log(ans);
+    try{
+        if(result.title == '' || result.content == ''){
+            res.send('입력이 안됨');
+        }
+        else {
+            await db.collection('post').insertOne({
+                title : result.title, 
+                content : result.content,
+                userID : ans._id,
+                username: ans.username
+            })
+            res.redirect('/list');
+        }
+        
+    }catch(e){
+        console.log(e);
+        res.status(500).send('server error');
+    }
+})
+
 
 module.exports = router
