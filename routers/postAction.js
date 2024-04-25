@@ -37,8 +37,12 @@ router.get('/detail/:id',async (req,res)=>{
 router.get('/edit/:id', async (req,res)=>{
     try{
         let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
-    
-    res.render('edit.ejs',{result : result});
+        
+        if (result.userID.equals(req.user.result._id)){
+            res.render('edit.ejs',{result : result});
+        }
+        else res.send('본인이 작성한 글이 아님');
+            
     }catch(e){
         console.log(e);
     }
@@ -69,21 +73,30 @@ router.put('/revise',async (req,res) => {
 });
 
 // list
-router.get('/list' ,async (req,res)=>{
+router.get('/list',CheckLogin ,async (req,res)=>{
     let result = await db.collection('post').find().toArray();
     //console.log(result);
     
-    //console.log(req.user);
-    res.render('list.ejs' , {post : result});
+   try{
+    let ans = req.user.result; 
+    console.log(ans);
+    if(ans!='')res.render('list.ejs' , {post : result , presentUser : ans });
+   }catch(e){
+    console.log(e);
+    
+   }
+    
+    
 });
 
 router.get('/list/next/:id', async (req,res)=>{
     try{
+        let ans = req.user.result; 
         let result = await db.collection('post')
             .find({_id : {$gte :new ObjectId(req.params.id)}})
             .limit(4).toArray();
 
-        res.render('list.ejs',{post:result});
+        res.render('list.ejs',{post:result, presentUser : ans});
     }catch(e){
         console.log(e);
     }
@@ -92,11 +105,12 @@ router.get('/list/next/:id', async (req,res)=>{
 
 router.get('/list/previous/:id', async (req,res)=>{
     try{
+        let ans = req.user.result; 
         let result = await db.collection('post')
             .find({_id : {$lte :new ObjectId(req.params.id)}})
             .limit(4).toArray();
 
-        res.render('list.ejs',{post:result});
+        res.render('list.ejs',{post:result, presentUser : ans});
     }catch(e){
         console.log(e);
     }
@@ -111,13 +125,13 @@ router.post('/delete',async (req,res) =>{
     try{
         let result = req.body;
         let ans = req.user.result;
-        console.log('-----')
-        console.log(new ObjectId(result.userID));
-        console.log(new ObjectId(ans._id));
+        //console.log('-----')
+        console.log(result);
+       // console.log(new ObjectId(ans._id));
         //console.log(new ObjectId(result.userID).equals(new ObjectId(ans._id)))
        
         if(new ObjectId(result.userID).equals(new ObjectId(ans._id))){
-            await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
+            //await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
         }
         
         res.redirect('/list');

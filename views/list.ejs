@@ -23,7 +23,7 @@
             <input name = "val" type="text" placeholder="searching">
             <button type = "submit">검색</button>
           </form>
-
+          
           <!-- <input class = 'search' placeholder="searching">
           <button class = 'search-send' type = "submit">검색</button> -->
           
@@ -42,7 +42,7 @@
           
         </div>
     
-  
+       
         <% for(let i =0; i < post.length; i++){ %>
 
         
@@ -53,12 +53,22 @@
             <h4><a class = "title-click" href="/detail/<%=post[i]._id%>">
               <%=post[i].title%>
             </a>
-            <a href="/edit/<%=post[i]._id%>">  ✏️</a>
+            <a href="/edit/<%=post[i]._id%>" class="<%=post[i].userID%>">  ✏️</a>
           </h4>
-          <span class ="delete-content" data-id = "<%=post[i]._id%>" 
-            data-userID = "<%=post[i].userID%>"> 🗑️</span>
+
           
-          
+
+          <span class ="delete-content <%=post[i]._id%>" data-id = "<%=post[i]._id%>" 
+            data-user = "<%=post[i].userID%>"> 🗑️</span>
+             
+            <script>
+              
+              if("<%=presentUser._id%>" !== "<%=post[i].userID%>"){
+                $('.<%=post[i]._id%>').addClass('hide');
+                $('.<%=post[i].userID%>').addClass('hide');
+              }
+              
+            </script>
 
             <div class="list-content">
               <p><%=post[i].content%></p>
@@ -67,21 +77,25 @@
           
         </div>
       <%}%> 
-
+        
+      
         <script>    
-          //if("<%=post.userID%>" == "<%=post.user%>");
+          
           
 
 
           let len = "<%=post.length%>";
-          
+          let presentID = "<%=presentUser._id%>";
 
           for(let i =0; i< len ;i++){
             
+            
+
             $('.delete-content').eq(i).click(function(e){
-              var getid = e.target.dataset.id;
-              var getuserID = e.target.dataset.userID;
-              
+              let getid = e.target.dataset.id;
+              let getuserID = e.target.dataset.user;
+
+            
               fetch ('/delete',{
                 method : 'POST',
                 headers : {'Content-Type' : 'application/json'},

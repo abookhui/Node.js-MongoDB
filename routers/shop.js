@@ -5,7 +5,6 @@ let connectDB = require('../database.js');
 
 let db;
 connectDB.then((client)=>{
-  console.log('DB연결성공')
   db = client.db('forum')
 }).catch((err)=>{
   console.log(err)
