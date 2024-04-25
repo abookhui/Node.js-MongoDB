@@ -27,13 +27,61 @@
               <p> <%=post.username%>의 글</p>
                 <h1><%=post.title%></h1>
             </div>
+
             <div class="content-box">
                 <p><%=post.content%></p>
             </div>
             
           </div>    
+
+          <div class="container comment-window">
+            <h4 style="font-weight: 800;">'<%=post.title%>' 의 댓글</h4>
+
+            <div class="container">
+              <% for(let i =0; i < ans.length; i++){ %>
+                <div class="comments-box">
+                  <p><%=ans[i].username%>의 댓글</p>
+                  <p><%=ans[i].comments%></p>
+                  <p><%=ans[i].time%></p>
+                </div>
+
+                <%}%>  
+            </div>
+            
+
+            <div class="container comment-input">   
+              <!-- <form action="/comment" method="POST">
+               
+                <textarea name="content" class="comment-write" placeholder="댓글"></textarea>
+                <button class="comment-btn" type="submit">작성</button>
+              </form>  -->
+              <button class="comment-btn">작성</button> 
+              <textarea name="content" class="comment-write" placeholder="댓글"></textarea>
+              
+              
+            </div>
+
+            <script>
+              $('.comment-btn').click(function(e){
+                let val = document.querySelector('textarea').value;
+                console.log(val);
+                let pageID = "<%=post._id%>";
+                fetch ('/comment',{
+                method : 'POST',
+                headers : {'Content-Type' : 'application/json'},
+                body : 
+                  JSON.stringify({
+                    page : pageID,
+                    comment : val
+                  }),
+                })
+                window.location.reload(1);
+
+              })
+            </script>
+          </div>
         </div>
-    
+        
    
 
 

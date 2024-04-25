@@ -21,9 +21,10 @@ function CheckLogin(req,res,next){
 router.get('/detail/:id',async (req,res)=>{
     try{
     let result = await db.collection('post').findOne({_id : new ObjectId(req.params)});
-        console.log(result);
+        //console.log(req.params.id);
+    let ans = await db.collection('comment').find({page : req.params.id}).toArray();    
+        res.render('detail.ejs',{post : result,ans : ans});
         
-        res.render('detail.ejs',{post : result});
     }catch(e){
         console.log(e);
         res.status(400).send('error')
@@ -37,7 +38,6 @@ router.get('/detail/:id',async (req,res)=>{
 router.get('/edit/:id', async (req,res)=>{
     try{
         let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
-        
         if (result.userID.equals(req.user.result._id)){
             res.render('edit.ejs',{result : result});
         }
@@ -52,7 +52,7 @@ router.get('/edit/:id', async (req,res)=>{
 
 router.put('/revise',async (req,res) => {
     let result = req.body;
-    console.log(result);
+    //console.log(result);
     try{
         if(result.title == '' || result.content == ''){
                 res.send("<script>alert('제목 또는 내용이 빈칸입니다.');</script>");
@@ -79,7 +79,7 @@ router.get('/list',CheckLogin ,async (req,res)=>{
     
    try{
     let ans = req.user.result; 
-    console.log(ans);
+    //console.log(ans);
     if(ans!='')res.render('list.ejs' , {post : result , presentUser : ans });
    }catch(e){
     console.log(e);
@@ -125,13 +125,10 @@ router.post('/delete',async (req,res) =>{
     try{
         let result = req.body;
         let ans = req.user.result;
-        //console.log('-----')
-        console.log(result);
-       // console.log(new ObjectId(ans._id));
-        //console.log(new ObjectId(result.userID).equals(new ObjectId(ans._id)))
+       
        
         if(new ObjectId(result.userID).equals(new ObjectId(ans._id))){
-            //await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
+            await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
         }
         
         res.redirect('/list');
@@ -159,8 +156,8 @@ router.get('/write',CheckLogin,async (req,res)=>{
 router.post('/add',async (req,res)=>{
     let result = req.body;
     let ans = req.user.result;
-    console.log(result);
-    console.log(ans);
+    //console.log(result);
+    //console.log(ans);
     try{
         if(result.title == '' || result.content == ''){
             res.send('입력이 안됨');
@@ -181,5 +178,30 @@ router.post('/add',async (req,res)=>{
     }
 })
 
+router.post('/logout',async (req,res)=> {
+    let result = await db.collection('sessions').deleteOne({
+
+    })
+})
+
+//comments
+router.post('/comment',async (req,res) =>{
+    let result = req.body;
+    let ans = req.user.result;
+   // console.log(ans);
+    let time = new Date();
+    //console.log(time.toLocaleString());
+    //console.log(result);
+    
+
+    await db.collection('comment').insertOne({
+        comments: result.comment, 
+        time : time.toLocaleString(),
+        username : ans.username,
+        userID : ans._id,
+        page : result.page
+    })
+    res.redirect('/list');
+})
 
 module.exports = router

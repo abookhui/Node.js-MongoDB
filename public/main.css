@@ -35,7 +35,7 @@ margin: 5px;
 color: grey;
 }
 .list-detail-box{
-min-height: 700px;
+min-height: 500px;
 background-color: white;
 border-radius: 10px;
 
@@ -120,4 +120,42 @@ text-align: right;
   border : none;
   background : lightgrey;
   border-radius: 5px;
+}
+.nav-login ,.nav-mypage, .nav-register{
+  color: blueviolet;
+  font-weight: 900;
+}
+.hide{
+  display: none;
+}
+.search-box{
+  width: 100%;
+  float: left;
+}
+.comment-window{
+  margin: 50px 0;
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  
+}
+.comment-input{
+  
+  border-radius: 5px;
+ 
+}
+
+.comment-write{
+  width: 100%;
+  min-height: 130px;
+}
+.comments-box{
+  padding: 20px;
+  background-color: rgb(234, 234, 227);
+  border-radius: 5px;
+  margin: 30px 0;
+}
+.comment-btn{
+  margin:10px 0;
+  
 }
