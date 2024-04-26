@@ -75,114 +75,7 @@ app.get('/',(req,res)=>{
 
 
 
-app.use('/',require('./routers/postAction.js'));
-/*상세 페이지 API */
-// app.get('/detail/:id',async (req,res)=>{
-//     try{
-//     let result = await db.collection('post').findOne({_id : new ObjectId(req.params)});
-//         //console.log(result);
-//         res.render('detail.ejs',{post : result});
-//     }catch(e){
-//         console.log(e);
-//         res.status(400).send('error')
-//     }
-    
-// })
 
-// app.post('/add',async (req,res)=>{
-//     let result = req.body;
-
-//     try{
-//         if(result.title == '' || result.content == ''){
-//             res.send('입력이 안됨');
-//         }
-//         else {
-//             await db.collection('post').insertOne({title : result.title, content : result.content})
-//             res.redirect('/list');
-//         }
-        
-//     }catch(e){
-//         console.log(e);
-//         res.status(500).send('server error');
-//     }
-// })
-
-// app.get('/edit/:id', async (req,res)=>{
-//     try{
-//         let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
-    
-//     res.render('edit.ejs',{result : result});
-//     }catch(e){
-//         console.log(e);
-//     }
-    
-// })
-
-// app.put('/revise',async (req,res) => {
-//     let result = req.body;
-//     console.log(result);
-//     try{
-//         if(result.title == '' || result.content == ''){
-//                 res.send("<script>alert('제목 또는 내용이 빈칸입니다.');</script>");
-//                 //res.redirect('/list');
-//             }
-//         else{
-//             await db.collection('post').updateOne({_id : new ObjectId(result.id)},
-//             {$set:{
-//                 title : result.title,
-//                 content : result.content
-//             }});
-//             res.redirect('/list');
-//         }
-//     }catch(e){
-//         console.log(e);
-//     }
-    
-// });
-
-// app.get('/list' ,async (req,res)=>{
-//     let result = await db.collection('post').find().toArray();
-//     //console.log(result);
-//     res.render('list.ejs' , {post : result});
-// });
-
-// app.get('/list/next/:id', async (req,res)=>{
-//     try{
-//         let result = await db.collection('post')
-//             .find({_id : {$gte :new ObjectId(req.params.id)}})
-//             .limit(4).toArray();
-
-//         res.render('list.ejs',{post:result});
-//     }catch(e){
-//         console.log(e);
-//     }
-    
-// });
-
-// app.get('/list/previous/:id', async (req,res)=>{
-//     try{
-//         let result = await db.collection('post')
-//             .find({_id : {$lte :new ObjectId(req.params.id)}})
-//             .limit(4).toArray();
-
-//         res.render('list.ejs',{post:result});
-//     }catch(e){
-//         console.log(e);
-//     }
-    
-// });
-
-// app.post('/delete',async (req,res) =>{
-//     try{
-//         let result = req.body;
-//         //console.log(result);
-//         await db.collection('post').deleteOne({_id : new ObjectId(result.id)});
-//         res.redirect('/list');
-//     }catch(e){
-//         console.log(e);
-//     }
-   
-// })
 
 passport.use(new LocalStrategy(async (입력한아이디, 입력한비번, cb) => {
     // 제출한 아이디/비번 db에 있는지 검사하는 코드
@@ -221,21 +114,6 @@ passport.deserializeUser(async (user,done)=>{  // 쿠키 분석해줌
 })
 
 
-// app.get('/write',CheckLogin,async (req,res)=>{
-//     try{
-//         let ans =req.user;
-
-//         if(ans != null){ 
-//             res.render('write.ejs');
-//         }
- 
-//     }catch(e){
-//         console.log(e);
-//     }
-    
-    
- 
-// })
 
 
 function LoginCondition(req,res,next){
@@ -251,6 +129,7 @@ function LoginCondition(req,res,next){
 app.get('/login',async (req,res) =>{
    try{
         let ans=req.user;
+        console.log(ans);
         if(ans==null){
             res.render('login.ejs',);
         }
@@ -260,16 +139,12 @@ app.get('/login',async (req,res) =>{
    }catch(e){
     console.log(e);
    }
-    
-        
 })
 
 app.post('/login',LoginCondition,async (req,res, next) =>{
     
     passport.authenticate('local',function(error, user, info){ //오류 성공 실패
-        //console.log(error);
-        //console.log(user);
-        //console.log(info);
+
         if(error) return res.status(500).json(error);
         if(!user) return  res.status(401).json(info.message);
         req.logIn(user,function(err){
@@ -332,28 +207,39 @@ app.post('/register',LoginCondition,async (req,res)=>{
     
 })
 
-app.use('/shop',require('./routers/shop.js'));
+//app.use('/shop',require('./routers/shop.js'));
+app.use('/',CheckLogin,require('./routers/postAction.js'));
 
-// app.get('/list/search',async (req,res)=>{
-//     console.log(req.body);
-//     res.render('search.ejs');
-// })
 
 app.post('/list/search',async (req,res)=>{
     
     try{
        let ans = req.body;
-        //console.log(req.body); 
+        let 검색조건 = [
+            {$search : {
+              index : 'title_index',
+              text : { query : ans.val, path : 'title' }
+            }},
+            {$sort : {_id : 1}},
+            
+          ]
         let result = await db.collection('post')
-        .find({title : {$regex : ans.search_result}}).toArray();
-        
-        result[0].ans = ans.search_result;
-        //console.log(result);
+        .aggregate(검색조건).toArray();
+
+        //console.log(result == '');
+
         res.render('search.ejs',{post:result});
+
+          // js query 이용
+    //    let ans = req.query.val;
+    //     // let result = await db.collection('post')
+    //     // .find({title : {$regex : ans}}).toArray();
+    //     // console.log(ans); 
+    //      let result = await db.collection('post')
+    //      .find( { $text : { $search: '제목' } } ).toArray();
+    //      console.log(ans);
+    //     console.log(result);
     }catch(e){
         console.log(e);
     }
-    
-   
-    
 })

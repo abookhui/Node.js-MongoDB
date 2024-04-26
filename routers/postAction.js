@@ -32,7 +32,50 @@ router.get('/detail/:id',async (req,res)=>{
     
 });
 
+// router.get('/detail/:id/chat', async (req,res) =>{
+   
+   
+//     try{
+//          let ans = req.params.id;
+//         //console.log(req.user.result);
+//         console.log(ans);
+//         let result = await db.collection('chat').find({
+//             userID : req.user.result._id,
+//             pageID : ans,
+//         }).toArray();
+//         let other = await db.collection('post').findOne({_id : new ObjectId(ans)})
+//         if(result == ''){
+//             console.log('bim')
+//         }
+        
+//         else {
+//             res.render('chat.ejs', {post : result}, {other : {
+//             pageID : ans,
+//             otherID: other.userID,
+//             othername: other.username
+        
+//             }});
+//         }
+//     }catch(e){
+//         console.log(e);
+//     }
+// })
 
+// router.post('/chat',async (req,res) =>{
+//     let result = req.body
+//     console.log(result);
+//     let ans = req.user.result
+//     let time = new Date();
+//     await db.collection('chat').insertOne({
+//         pageID: result.pageID,
+//         userID: ans._id,
+//         username: ans.username,
+//         content: result.content,
+//         time: time.toLocaleString(),
+//         otherID: result.otherID,
+//         othername:result.othername
+//     })
+// })
 // edit revise
 
 router.get('/edit/:id', async (req,res)=>{
@@ -73,7 +116,7 @@ router.put('/revise',async (req,res) => {
 });
 
 // list
-router.get('/list',CheckLogin ,async (req,res)=>{
+router.get('/list',async (req,res)=>{
     let result = await db.collection('post').find().toArray();
     //console.log(result);
     
@@ -140,7 +183,7 @@ router.post('/delete',async (req,res) =>{
 
 // write add
 
-router.get('/write',CheckLogin,async (req,res)=>{
+router.get('/write' ,async (req,res)=>{
     try{
         let ans =req.user;
 
